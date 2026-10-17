@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>이 문자 진짜 한난 문자인가요?</title>
+<meta name="description" content="받은 문자의 전화번호·인터넷 주소를 한국지역난방공사 홈페이지에 공개된 값과 브라우저 안에서 대조합니다. 저장·전송 없음.">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#191f28;--sub:#6b7684;--line:#e5e8eb;--blue:#1b64da;--ok:#087f5b;--okbg:#e6fcf5;--bad:#c62828;--badbg:#ffebee;--warn:#9c4f00;--warnbg:#fff4e6;--onblue:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#101114;--card:#1b1d22;--ink:#f2f4f6;--sub:#9aa3ad;--line:#2c2f36;--blue:#5a9bff;--ok:#4fd49b;--okbg:#10291f;--bad:#ff7a75;--badbg:#341a19;--warn:#f0c14b;--warnbg:#332a10;--onblue:#101114}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+main{max-width:640px;margin:0 auto;padding:24px 16px 56px}
+h1{font-size:24px;line-height:1.35;margin:8px 0 8px}
+.lead{color:var(--sub);margin:0 0 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px}
+label{font-weight:600;display:block;margin-bottom:8px}
+textarea{width:100%;min-height:130px;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
+textarea:focus{outline:2px solid var(--blue);outline-offset:1px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button{font:inherit;border:0;border-radius:12px;padding:12px 16px;cursor:pointer;min-height:44px}
+.primary{min-height:52px;background:var(--blue);color:var(--onblue);font-weight:700;flex:1}
+.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line);font-size:14px}
+#verdict{display:none;border-radius:16px;padding:16px;margin-bottom:16px}
+#verdict h2{margin:0 0 8px;font-size:20px}
+#verdict.match{display:block;background:var(--okbg);color:var(--ok)}
+#verdict.unlisted{display:block;background:var(--badbg);color:var(--bad)}
+#verdict.empty{display:block;background:var(--warnbg);color:var(--warn)}
+#verdict p{margin:8px 0;color:var(--ink)}
+ul.find{list-style:none;padding:0;margin:12px 0 0}
+ul.find li{padding:8px 0;border-top:1px solid var(--line);word-break:break-all;color:var(--ink);font-size:15px}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:4px 8px;border-radius:100px;margin-right:8px}
+.tag.y{background:var(--okbg);color:var(--ok)}.tag.n{background:var(--badbg);color:var(--bad)}
+.src{font-size:13px;color:var(--sub)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 4px;border-top:1px solid var(--line);vertical-align:top;word-break:break-all}
+th{color:var(--sub);font-weight:600}
+a{color:var(--blue)}
+.note{font-size:13px;color:var(--sub)}
+h3{font-size:16px;margin:0 0 8px}
+</style>
+</head>
+<body>
+<main>
+<h1>이 문자 진짜 한난 문자인가요?</h1>
+<p class="lead">받은 문자를 붙여 넣으면, 안에 있는 전화번호와 인터넷 주소를 한국지역난방공사 홈페이지에 공개된 값과 대조합니다. 이 화면 안에서만 계산하고 아무것도 저장하거나 보내지 않습니다.</p>
+
+<div class="card">
+  <label for="msg">받은 문자 내용</label>
+  <textarea id="msg" placeholder="예) [지역난방] 열요금 안내, 아래 주소에서 확인하세요 http://example-pay.com/x"></textarea>
+  <div class="row">
+    <button id="go" class="primary" type="button">대조하기</button>
+    <button class="ghost" type="button" data-sample="[한국지역난방공사] 열요금 고지 안내입니다. 확인: 한난 홈페이지 &gt; 고객마당. 문의 1688-2488">예시: 공개된 값만</button>
+    <button class="ghost" type="button" data-sample="[지역난방] 열요금 미납 안내. 오늘 안에 납부 https://kdhc.co.kr.pay-check.com/pay 문의 010-1234-5678">예시: 의심 문자</button>
+  </div>
+</div>
+
+<div id="verdict" role="status" aria-live="polite"></div>
+
+<div class="card">
+  <details><summary><b>대조에 쓰는 공식 목록 보기</b></summary>
+  <p class="note">공사 홈페이지에 공개된 값만 넣었습니다. 확인일 <span id="checked"></span>. 이 목록에 없는 값은 공식 확인이 안 된 값입니다.</p>
+  <table id="list"><thead><tr><th>값</th><th>용도</th><th>출처</th></tr></thead><tbody></tbody></table>
+  </details>
+</div>
+
+<div class="card note">
+  <p style="margin-top:0"><b>이 화면은 공모 제안의 시제품입니다.</b> 「공식 발신 목록 1쪽」을 공사가 홈페이지에 공시하면 고객이 쓰게 될 화면을 미리 만든 것이며, 한국지역난방공사의 공식 서비스가 아닙니다.</p>
+  <p>목록과 일치해도 안전을 보증하지는 않습니다. 발신번호는 바뀌어 보이게 꾸밀 수 있으니, 문자 속 링크를 누르지 말고 공사 홈페이지에서 직접 확인하거나 상담전화 1688-2488로 물어보세요.</p>
+  <p style="margin-bottom:0">공식 목록은 공사가 직접 정하는 것이 맞습니다. 여기 있는 표는 홈페이지에서 읽은 값의 사본일 뿐입니다.</p>
+</div>
+</main>
+<script src="domain/official-list.js"></script>
+<script src="domain/check.js"></script>
+<script>
+(function(){
+  var L=window.OFFICIAL_LIST, C=window.KdhcCheck;
+  var $=function(i){return document.getElementById(i)};
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  $('checked').textContent=L.checkedAt;
+  var tb=document.querySelector('#list tbody');
+  L.phones.concat(L.hosts).forEach(function(e){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+esc(e.value)+'</td><td>'+esc(e.use)+'</td><td><a href="'+esc(e.source)+'" target="_blank" rel="noopener">출처</a></td>';
+    tb.appendChild(tr);
+  });
+  function run(){
+    var r=C.judge($('msg').value,L), v=$('verdict'), h='';
+    v.className=r.verdict;
+    if(r.verdict==='match'){
+      h='<h2>목록과 일치</h2><p>문자 속 값이 모두 공사 홈페이지에 공개된 값과 같습니다.</p>';
+      if(r.hasLink) h+='<p>다만 문자에 링크가 있습니다. 링크를 누르기보다 홈페이지에서 직접 확인하는 편이 안전합니다.</p>';
+      h+='<p>일치는 안전 보증이 아닙니다. 의심되면 1688-2488로 확인하세요.</p>';
+    }else if(r.verdict==='unlisted'){
+      h='<h2>목록에 없음 — 공식 확인 경로로 확인하세요</h2><p>공사 홈페이지에 공개된 값이 아닌 번호나 주소가 들어 있습니다. 링크를 누르거나 번호로 전화하지 말고, 공사 홈페이지(www.kdhc.co.kr) &gt; 고객마당에서 확인하거나 상담전화 1688-2488로 문의하세요.</p>';
+    }else{
+      h='<h2>대조할 값이 없습니다</h2><p>문자에서 전화번호나 인터넷 주소를 찾지 못했습니다. 문자 전체를 붙여 넣었는지 확인하세요.</p>';
+    }
+    if(r.findings.length){
+      h+='<ul class="find">'+r.findings.map(function(f){
+        return '<li><span class="tag '+(f.listed?'y':'n')+'">'+(f.listed?'목록 일치':'목록에 없음')+'</span>'+esc(f.raw)+(f.listed?'<div class="src">'+esc(f.entry.use)+' · <a href="'+esc(f.entry.source)+'" target="_blank" rel="noopener">출처</a></div>':'')+'</li>';
+      }).join('')+'</ul>';
+    }
+    v.innerHTML=h;
+  }
+  $('go').addEventListener('click',run);
+  Array.prototype.forEach.call(document.querySelectorAll('[data-sample]'),function(b){
+    b.addEventListener('click',function(){var d=document.createElement('textarea');d.innerHTML=b.getAttribute('data-sample');$('msg').value=d.value;run();});
+  });
+})();
+</script>
+</body>
+</html>
