@@ -25,6 +25,7 @@ button{font:inherit;border:0;border-radius:12px;padding:12px 16px;cursor:pointer
 #verdict h2{margin:0 0 8px;font-size:20px}
 #verdict.match{display:block;background:var(--okbg);color:var(--ok)}
 #verdict.unlisted{display:block;background:var(--badbg);color:var(--bad)}
+#verdict.unscheduled{display:block;background:var(--badbg);color:var(--bad)}
 #verdict.empty{display:block;background:var(--warnbg);color:var(--warn)}
 #verdict p{margin:8px 0;color:var(--ink)}
 ul.find{list-style:none;padding:0;margin:12px 0 0}
@@ -46,12 +47,15 @@ h3{font-size:16px;margin:0 0 8px}
 <h1>이 문자 진짜 한난 문자인가요?</h1>
 <p class="lead">받은 문자를 붙여 넣으면, 안에 있는 전화번호와 인터넷 주소를 한국지역난방공사 홈페이지에 공개된 값과 대조합니다. 이 화면 안에서만 계산하고 아무것도 저장하거나 보내지 않습니다.</p>
 
+<div class="card"><b>이번 달 공사 직접 연락 예정: <span id="sched">0</span>건(예시)</b>
+  <div class="note">공사가 매달 고지서 한 줄로 미리 알린 건수입니다. 이 시제품에서는 0건으로 고정한 예시입니다.</div></div>
+
 <div class="card">
   <label for="msg">받은 문자 내용</label>
   <textarea id="msg" placeholder="예) [지역난방] 열요금 안내, 아래 주소에서 확인하세요 http://example-pay.com/x"></textarea>
   <div class="row">
     <button id="go" class="primary" type="button">대조하기</button>
-    <button class="ghost" type="button" data-sample="[한국지역난방공사] 열요금 안내입니다. 확인: 1688-2488">예시: 공개된 값만</button>
+    <button class="ghost" type="button" data-sample="[한국지역난방공사] 열요금 안내입니다. 확인: 1688-2488">예시: 한난 이름 + 공식 번호</button>
     <button class="ghost" type="button" data-sample="[지역난방] 열요금 미납 안내. 오늘 안에 납부 https://kdhc.co.kr.pay-check.com/pay 문의 010-1234-5678">예시: 의심 문자</button>
   </div>
 </div>
@@ -86,9 +90,11 @@ h3{font-size:16px;margin:0 0 8px}
     tb.appendChild(tr);
   });
   function run(){
-    var r=C.judge($('msg').value,L), v=$('verdict'), h='';
+    var r=C.judge($('msg').value,L,{scheduled:0}), v=$('verdict'), h='';
     v.className=r.verdict;
-    if(r.verdict==='match'){
+    if(r.verdict==='unscheduled'){
+      h='<h2>예정에 없는 연락 — 1688-2488로 확인하세요</h2><p>이번 달 공사가 세대에 직접 연락하기로 미리 알린 건은 0건입니다. 한난 이름의 문자는 번호가 공식 번호와 같아도 가짜로 봅니다. 링크를 누르지 말고 상담전화 1688-2488로 물어보세요.</p>';
+    }else if(r.verdict==='match'){
       h='<h2>목록과 일치</h2><p>문자 속 값이 모두 공사 홈페이지에 공개된 값과 같습니다.</p>';
       if(r.hasLink) h+='<p>다만 문자에 링크가 있습니다. 링크를 누르기보다 홈페이지에서 직접 확인하는 편이 안전합니다.</p>';
       h+='<p>일치는 안전 보증이 아닙니다. 의심되면 1688-2488로 확인하세요.</p>';

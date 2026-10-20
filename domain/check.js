@@ -46,7 +46,12 @@
     return out;
   }
 
-  function judge(text, list) {
+  var NAME_RE = /한난|한국지역난방공사|지역난방/;
+
+  // opts.scheduled = 이번 달 공사 직접 연락 예정 건수(기본 0). 0건인 달에 한난 이름이 든 연락은 번호가 맞아도 예정에 없는 연락.
+  function judge(text, list, opts) {
+    var scheduled = opts && typeof opts.scheduled === 'number' ? opts.scheduled : 0;
+    var named = NAME_RE.test(text || '');
     var phones = extractPhones(text || '');
     var hosts = extractHosts(text || '');
     var okPhones = {}, okHosts = {};
@@ -63,9 +68,10 @@
       if (f.link) hasLink = true;
       findings.push({ kind: 'host', raw: f.raw, host: f.key, listed: !!hit, entry: hit || null });
     });
-    var verdict = findings.length === 0 ? 'empty'
+    var verdict = (named && scheduled === 0) ? 'unscheduled'
+      : findings.length === 0 ? 'empty'
       : findings.every(function (f) { return f.listed; }) ? 'match' : 'unlisted';
-    return { verdict: verdict, findings: findings, hasLink: hasLink };
+    return { verdict: verdict, findings: findings, hasLink: hasLink, named: named, scheduled: scheduled };
   }
 
   var api = { judge: judge, extractPhones: extractPhones, extractHosts: extractHosts, normalizePhone: normalizePhone, hostOf: hostOf };
